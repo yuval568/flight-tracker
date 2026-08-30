@@ -1,0 +1,30 @@
+name: Thailand Flight Monitor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-flights:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run flight monitor
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_CONTENT_SID: ${{ secrets.TWILIO_CONTENT_SID }}
+          TWILIO_WHATSAPP: ${{ secrets.TWILIO_WHATSAPP }}
+          MY_WHATSAPP: ${{ secrets.MY_WHATSAPP }}
+        run: python flight_monitor.py
