@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 
 API_KEY = os.environ["SERPAPI_KEY"]
@@ -164,17 +165,36 @@ def get_best_round_trip(outbound_date, return_date):
     return best_trip
 
 
-def send_whatsapp_test():
-    """Send Twilio's Trial template to prove the monitor reached the notification step."""
+def send_whatsapp(best, level):
+    """Send the latest flight result using the approved WhatsApp template."""
+
     url = (
         f"https://api.twilio.com/2010-04-01/"
         f"Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"
     )
 
+    # If both directions use the same airline, show it once.
+    # Otherwise show both.
+    if best["outbound_airline"] == best["return_airline"]:
+        airline_text = best["outbound_airline"]
+    else:
+        airline_text = (
+            f"Outbound: {best['outbound_airline']} | "
+            f"Return: {best['return_airline']}"
+        )
+
+    content_variables = {
+        "1": f"{best['outbound_date']} - {best['return_date']}",
+        "2": f"${best['price']:,.0f}",
+        "3": level.title(),
+        "4": airline_text,
+    }
+
     data = {
         "To": MY_WHATSAPP,
         "From": TWILIO_WHATSAPP,
         "ContentSid": TWILIO_CONTENT_SID,
+        "ContentVariables": json.dumps(content_variables),
     }
 
     response = requests.post(
@@ -192,7 +212,6 @@ def send_whatsapp_test():
     print(response.status_code)
     print(response.text)
     return False
-
 
 all_valid_trips = []
 market_data = {}
@@ -235,16 +254,14 @@ if all_valid_trips:
     print(f"🛫 Outbound airline: {best['outbound_airline']}")
     print(f"🛬 Return airline: {best['return_airline']}")
 
-    if insights:
+    level = "unknown"
 
-        level = insights.get("price_level", "unknown")
-        
-        print(f"📊 Market status: {level}")
+if insights:
+    level = insights.get("price_level", "unknown")
 
-    # Trial limitation: this currently sends Twilio's built-in test template.
-    # Once the account is upgraded, we can replace it with a custom template
-    # containing the date, price and market status printed above.
-    send_whatsapp_test()
+print(f"📊 Market status: {level}")
+
+send_whatsapp(best, level)
 
 else:
     print("\n😕 No suitable flights found.")
