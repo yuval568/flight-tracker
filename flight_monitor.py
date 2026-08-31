@@ -256,14 +256,14 @@ if all_valid_trips:
 
     level = "unknown"
 
-if insights:
-    level = insights.get("price_level", "unknown")
+    if insights:
+        level = insights.get("price_level", "unknown")
 
-print(f"📊 Market status: {level}")
+    print(f"📊 Market status: {level}")
 
-send_whatsapp(best, level)
+    send_whatsapp(best, level)
 
 else:
     print("\n😕 No suitable flights found.")
-    
+
 print(f"\n🔎 API calls used: {api_calls}")
